@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('user', 'chef', 'admin') DEFAULT 'user',
+    role ENUM('customer', 'chef', 'admin') DEFAULT 'customer',
     avatar VARCHAR(255) DEFAULT '',
     phone VARCHAR(20),
     address TEXT,
@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS chefs (
     experience INT NOT NULL,
     pricePerService DECIMAL(10,2) NOT NULL DEFAULT 0,
     pricePerGuest DECIMAL(10,2) DEFAULT 0,
+    travelFee DECIMAL(10,2) DEFAULT 0,
     address TEXT,
     city VARCHAR(100),
     state VARCHAR(100),
@@ -40,14 +41,24 @@ CREATE TABLE IF NOT EXISTS chefs (
     zipCode VARCHAR(20),
     serviceRadius INT DEFAULT 20,
     profileImage VARCHAR(255),
+    galleryImages JSON DEFAULT (JSON_ARRAY()),
     isVerified BOOLEAN DEFAULT FALSE,
     isAvailable BOOLEAN DEFAULT TRUE,
     rating DECIMAL(3,2) DEFAULT 0,
     totalReviews INT DEFAULT 0,
     totalBookings INT DEFAULT 0,
+    specialties JSON DEFAULT (JSON_ARRAY()),
+    dietaryOptions JSON DEFAULT (JSON_ARRAY()),
     languages JSON DEFAULT (JSON_ARRAY()),
     signatureDishes JSON DEFAULT (JSON_ARRAY()),
     certifications JSON DEFAULT (JSON_ARRAY()),
+    serviceAreas JSON DEFAULT (JSON_ARRAY()),
+    minimumGuests INT DEFAULT 1,
+    maxGuests INT DEFAULT 12,
+    responseTime VARCHAR(100) DEFAULT 'Usually responds within 24 hours',
+    sampleMenu TEXT,
+    kitchenRequirements TEXT,
+    allergenExperience TEXT,
     availability JSON,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -105,15 +116,29 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY (bookingId) REFERENCES bookings(id)
 );
 
+-- Favorite chefs table
+CREATE TABLE IF NOT EXISTS favorite_chefs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    userId INT NOT NULL,
+    chefId INT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_chef_favorite (userId, chefId),
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (chefId) REFERENCES chefs(id) ON DELETE CASCADE
+);
+
 -- Cuisines table
 CREATE TABLE IF NOT EXISTS cuisines (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
     icon VARCHAR(255),
     isActive BOOLEAN DEFAULT TRUE,
+    createdByChefId INT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (createdByChefId) REFERENCES chefs(id) ON DELETE SET NULL
 );
 
 -- Chef-Cuisine junction table
@@ -133,9 +158,12 @@ CREATE INDEX idx_bookings_user ON bookings(userId);
 CREATE INDEX idx_bookings_chef ON bookings(chefId);
 CREATE INDEX idx_bookings_date ON bookings(date);
 CREATE INDEX idx_reviews_chef ON reviews(chefId);
+CREATE INDEX idx_favorite_chefs_user ON favorite_chefs(userId);
+CREATE INDEX idx_favorite_chefs_chef ON favorite_chefs(chefId);
 
 -- Insert sample cuisines
 INSERT INTO cuisines (name, description) VALUES
+('British', 'Modern and traditional British cooking'),
 ('Italian', 'Authentic Italian cuisine from various regions'),
 ('Indian', 'Traditional Indian dishes with rich spices'),
 ('Chinese', 'Authentic Chinese home-style cooking'),

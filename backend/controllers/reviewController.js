@@ -1,41 +1,34 @@
-const { Review, Booking, Chef } = require('../models');
+const asyncHandler = require('express-async-handler');
+const { Review, Booking, Chef, User } = require('../models');
 
 // @desc    Create review
 // @route   POST /api/reviews
 // @access  Private
-const createReview = async (req, res) => {
+const createReview = asyncHandler(async (req, res) => {
   const { bookingId, rating, title, comment } = req.body;
 
   // Check if booking exists and belongs to user
   const booking = await Booking.findByPk(bookingId);
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'Booking not found',
-    });
+    res.status(404);
+    throw new Error('Booking not found');
   }
 
   if (booking.userId !== req.user.id) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   if (booking.status !== 'completed') {
-    return res.status(400).json({
-      success: false,
-      message: 'Can only review completed bookings',
-    });
+    res.status(400);
+    throw new Error('Can only review completed bookings');
   }
 
   // Check if review already exists
   const existingReview = await Review.findOne({ where: { bookingId } });
   if (existingReview) {
-    return res.status(400).json({
-      success: false,
-      message: 'Review already exists for this booking',
-    });
+    res.status(400);
+    throw new Error('Review already exists for this booking');
   }
 
   const review = await Review.create({
@@ -57,12 +50,12 @@ const createReview = async (req, res) => {
     success: true,
     data: review,
   });
-};
+});
 
 // @desc    Get chef reviews
 // @route   GET /api/reviews/chef/:chefId
 // @access  Public
-const getChefReviews = async (req, res) => {
+const getChefReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.findAll({
     where: { chefId: req.params.chefId },
     include: [{
@@ -77,12 +70,12 @@ const getChefReviews = async (req, res) => {
     success: true,
     data: reviews,
   });
-};
+});
 
 // @desc    Get user reviews
 // @route   GET /api/reviews/user
 // @access  Private
-const getUserReviews = async (req, res) => {
+const getUserReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.findAll({
     where: { userId: req.user.id },
     include: [{
@@ -97,26 +90,22 @@ const getUserReviews = async (req, res) => {
     success: true,
     data: reviews,
   });
-};
+});
 
 // @desc    Update review
 // @route   PUT /api/reviews/:id
 // @access  Private
-const updateReview = async (req, res) => {
+const updateReview = asyncHandler(async (req, res) => {
   const review = await Review.findByPk(req.params.id);
 
   if (!review) {
-    return res.status(404).json({
-      success: false,
-      message: 'Review not found',
-    });
+    res.status(404);
+    throw new Error('Review not found');
   }
 
   if (review.userId !== req.user.id) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   await review.update(req.body);
@@ -125,26 +114,22 @@ const updateReview = async (req, res) => {
     success: true,
     data: review,
   });
-};
+});
 
 // @desc    Delete review
 // @route   DELETE /api/reviews/:id
 // @access  Private
-const deleteReview = async (req, res) => {
+const deleteReview = asyncHandler(async (req, res) => {
   const review = await Review.findByPk(req.params.id);
 
   if (!review) {
-    return res.status(404).json({
-      success: false,
-      message: 'Review not found',
-    });
+    res.status(404);
+    throw new Error('Review not found');
   }
 
   if (review.userId !== req.user.id && req.user.role !== 'admin') {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   await review.destroy();
@@ -153,7 +138,7 @@ const deleteReview = async (req, res) => {
     success: true,
     message: 'Review deleted successfully',
   });
-};
+});
 
 module.exports = {
   createReview,

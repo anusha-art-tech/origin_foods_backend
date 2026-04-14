@@ -1,10 +1,11 @@
-const { User, Booking, Review, Chef, sequelize } = require('../models');
+const asyncHandler = require('express-async-handler');
+const { User, Booking, Review, Chef, FavoriteChef } = require('../models');
 const { Op } = require('sequelize');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-const getUserProfile = async (req, res) => {
+const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ['password'] }
   });
@@ -18,12 +19,12 @@ const getUserProfile = async (req, res) => {
     success: true,
     data: { user, chefProfile },
   });
-};
+});
 
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
-const updateUserProfile = async (req, res) => {
+const updateUserProfile = asyncHandler(async (req, res) => {
   const { name, phone, address, city, state, country, zipCode } = req.body;
 
   await User.update(
@@ -39,12 +40,12 @@ const updateUserProfile = async (req, res) => {
     success: true,
     data: updatedUser,
   });
-};
+});
 
 // @desc    Get user bookings
 // @route   GET /api/users/bookings
 // @access  Private
-const getUserBookings = async (req, res) => {
+const getUserBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.findAll({
     where: { userId: req.user.id },
     include: [{
@@ -59,12 +60,12 @@ const getUserBookings = async (req, res) => {
     success: true,
     data: bookings,
   });
-};
+});
 
 // @desc    Get user reviews
 // @route   GET /api/users/reviews
 // @access  Private
-const getUserReviews = async (req, res) => {
+const getUserReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.findAll({
     where: { userId: req.user.id },
     include: [{
@@ -79,79 +80,79 @@ const getUserReviews = async (req, res) => {
     success: true,
     data: reviews,
   });
-};
+});
 
 // @desc    Get user's favorite chefs
 // @route   GET /api/users/favorites
 // @access  Private
-const getFavoriteChefs = async (req, res) => {
-  const user = await User.findByPk(req.user.id);
-  const favoriteChefIds = user.favoriteChefs || [];
-  
-  const favoriteChefs = await Chef.findAll({
-    where: { id: { [Op.in]: favoriteChefIds } },
+const getFavoriteChefs = asyncHandler(async (req, res) => {
+  const favoriteLinks = await FavoriteChef.findAll({
+    where: { userId: req.user.id },
     include: [{
-      model: User,
-      as: 'user',
-      attributes: ['id', 'name', 'avatar']
-    }]
+      model: Chef,
+      as: 'chef',
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'avatar']
+      }]
+    }],
+    order: [['createdAt', 'DESC']],
   });
 
   res.status(200).json({
     success: true,
-    data: favoriteChefs,
+    data: favoriteLinks.map((link) => link.chef),
   });
-};
+});
 
 // @desc    Add chef to favorites
 // @route   POST /api/users/favorites/:chefId
 // @access  Private
-const addFavoriteChef = async (req, res) => {
+const addFavoriteChef = asyncHandler(async (req, res) => {
   const { chefId } = req.params;
   
   const chef = await Chef.findByPk(chefId);
   if (!chef) {
-    return res.status(404).json({
-      success: false,
-      message: 'Chef not found',
-    });
+    res.status(404);
+    throw new Error('Chef not found');
   }
 
-  const user = await User.findByPk(req.user.id);
-  let favorites = user.favoriteChefs || [];
-  
-  if (!favorites.includes(parseInt(chefId))) {
-    favorites.push(parseInt(chefId));
-    await user.update({ favoriteChefs: favorites });
-  }
+  await FavoriteChef.findOrCreate({
+    where: {
+      userId: req.user.id,
+      chefId: parseInt(chefId, 10),
+    },
+  });
 
   res.status(200).json({
     success: true,
     message: 'Chef added to favorites',
   });
-};
+});
 
 // @desc    Remove chef from favorites
 // @route   DELETE /api/users/favorites/:chefId
 // @access  Private
-const removeFavoriteChef = async (req, res) => {
+const removeFavoriteChef = asyncHandler(async (req, res) => {
   const { chefId } = req.params;
-  const user = await User.findByPk(req.user.id);
-  let favorites = user.favoriteChefs || [];
-  
-  favorites = favorites.filter(id => id !== parseInt(chefId));
-  await user.update({ favoriteChefs: favorites });
+  await FavoriteChef.destroy({
+    where: {
+      userId: req.user.id,
+      chefId: parseInt(chefId, 10),
+    },
+  });
 
   res.status(200).json({
     success: true,
     message: 'Chef removed from favorites',
   });
-};
+});
 
 // @desc    Get user statistics
 // @route   GET /api/users/stats
 // @access  Private
-const getUserStats = async (req, res) => {
+const getUserStats = asyncHandler(async (req, res) => {
   const totalBookings = await Booking.count({
     where: { userId: req.user.id }
   });
@@ -167,12 +168,16 @@ const getUserStats = async (req, res) => {
   const totalReviews = await Review.count({
     where: { userId: req.user.id }
   });
+
+  const totalFavorites = await FavoriteChef.count({
+    where: { userId: req.user.id }
+  });
   
   const upcomingBookings = await Booking.count({
     where: {
       userId: req.user.id,
       status: { [Op.in]: ['pending', 'confirmed'] },
-      date: { [Op.gte]: new Date() }
+      date: { [Op.gte]: new Date().toISOString().split('T')[0] }
     }
   });
 
@@ -183,10 +188,11 @@ const getUserStats = async (req, res) => {
       completedBookings,
       totalSpent: totalSpent || 0,
       totalReviews,
+      totalFavorites,
       upcomingBookings,
     },
   });
-};
+});
 
 module.exports = {
   getUserProfile,

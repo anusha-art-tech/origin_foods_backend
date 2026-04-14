@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
     },
     description: {
       type: DataTypes.TEXT,
@@ -21,6 +20,10 @@ module.exports = (sequelize, DataTypes) => {
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    createdByChefId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,

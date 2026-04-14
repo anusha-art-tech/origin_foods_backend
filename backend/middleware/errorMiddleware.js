@@ -16,6 +16,10 @@ const errorMiddleware = (err, req, res, next) => {
     error = { message, statusCode: 400 };
   }
 
+  if (err.name === 'MulterError') {
+    error = { message: err.message, statusCode: 400 };
+  }
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     const message = 'Invalid token';

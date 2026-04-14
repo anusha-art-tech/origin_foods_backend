@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
+    cuisine: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
     bio: {
       type: DataTypes.TEXT,
       allowNull: false
@@ -36,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     },
     pricePerGuest: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0
+    },
+    travelFee: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0
     },
@@ -67,6 +75,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(255),
       allowNull: true
     },
+    galleryImages: {
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
     isVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -87,6 +99,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 0
     },
+    specialties: {
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
+    dietaryOptions: {
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
     languages: {
       type: DataTypes.JSON,
       defaultValue: []
@@ -98,6 +118,34 @@ module.exports = (sequelize, DataTypes) => {
     certifications: {
       type: DataTypes.JSON,
       defaultValue: []
+    },
+    serviceAreas: {
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
+    minimumGuests: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
+    maxGuests: {
+      type: DataTypes.INTEGER,
+      defaultValue: 12
+    },
+    responseTime: {
+      type: DataTypes.STRING(100),
+      defaultValue: 'Usually responds within 24 hours'
+    },
+    sampleMenu: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    kitchenRequirements: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    allergenExperience: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     availability: {
       type: DataTypes.JSON,

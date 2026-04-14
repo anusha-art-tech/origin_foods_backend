@@ -1,10 +1,10 @@
-const { User, Chef, Booking, Review, sequelize } = require('../models');
-const { Op } = require('sequelize');
+const asyncHandler = require('express-async-handler');
+const { User, Chef, Booking } = require('../models');
 
 // @desc    Get all users
 // @route   GET /api/admin/users
 // @access  Private/Admin
-const getAllUsers = async (req, res) => {
+const getAllUsers = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
   const offset = (page - 1) * limit;
@@ -26,12 +26,12 @@ const getAllUsers = async (req, res) => {
       pages: Math.ceil(count / limit),
     },
   });
-};
+});
 
 // @desc    Get all chefs
 // @route   GET /api/admin/chefs
 // @access  Private/Admin
-const getAllChefs = async (req, res) => {
+const getAllChefs = asyncHandler(async (req, res) => {
   const chefs = await Chef.findAll({
     include: [{
       model: User,
@@ -45,12 +45,12 @@ const getAllChefs = async (req, res) => {
     success: true,
     data: chefs,
   });
-};
+});
 
 // @desc    Get all bookings
 // @route   GET /api/admin/bookings
 // @access  Private/Admin
-const getAllBookings = async (req, res) => {
+const getAllBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.findAll({
     include: [
       { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
@@ -63,20 +63,18 @@ const getAllBookings = async (req, res) => {
     success: true,
     data: bookings,
   });
-};
+});
 
 // @desc    Update user role
 // @route   PUT /api/admin/users/:id/role
 // @access  Private/Admin
-const updateUserRole = async (req, res) => {
+const updateUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
   const user = await User.findByPk(req.params.id);
 
   if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
+    res.status(404);
+    throw new Error('User not found');
   }
 
   await user.update({ role });
@@ -85,19 +83,17 @@ const updateUserRole = async (req, res) => {
     success: true,
     data: user,
   });
-};
+});
 
 // @desc    Verify chef
 // @route   PUT /api/admin/chefs/:id/verify
 // @access  Private/Admin
-const verifyChef = async (req, res) => {
+const verifyChef = asyncHandler(async (req, res) => {
   const chef = await Chef.findByPk(req.params.id);
 
   if (!chef) {
-    return res.status(404).json({
-      success: false,
-      message: 'Chef not found',
-    });
+    res.status(404);
+    throw new Error('Chef not found');
   }
 
   await chef.update({ isVerified: true });
@@ -106,12 +102,12 @@ const verifyChef = async (req, res) => {
     success: true,
     data: chef,
   });
-};
+});
 
 // @desc    Get dashboard stats
 // @route   GET /api/admin/stats
 // @access  Private/Admin
-const getDashboardStats = async (req, res) => {
+const getDashboardStats = asyncHandler(async (_req, res) => {
   const totalUsers = await User.count();
   const totalChefs = await Chef.count();
   const totalBookings = await Booking.count();
@@ -132,7 +128,7 @@ const getDashboardStats = async (req, res) => {
       pendingBookings,
     },
   });
-};
+});
 
 module.exports = {
   getAllUsers,

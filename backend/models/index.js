@@ -7,6 +7,7 @@ const Chef = require('./Chef')(sequelize, DataTypes);
 const Booking = require('./Booking')(sequelize, DataTypes);
 const Review = require('./Review')(sequelize, DataTypes);
 const Cuisine = require('./Cuisine')(sequelize, DataTypes);
+const FavoriteChef = require('./FavoriteChef')(sequelize, DataTypes);
 
 // Define associations
 User.hasOne(Chef, { foreignKey: 'userId', as: 'chefProfile' });
@@ -29,6 +30,26 @@ Review.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
 Chef.belongsToMany(Cuisine, { through: 'ChefCuisines', foreignKey: 'chefId' });
 Cuisine.belongsToMany(Chef, { through: 'ChefCuisines', foreignKey: 'cuisineId' });
+Chef.hasMany(Cuisine, { foreignKey: 'createdByChefId', as: 'managedCuisines' });
+Cuisine.belongsTo(Chef, { foreignKey: 'createdByChefId', as: 'creatorChef' });
+
+User.belongsToMany(Chef, {
+  through: FavoriteChef,
+  foreignKey: 'userId',
+  otherKey: 'chefId',
+  as: 'favoriteChefs',
+});
+Chef.belongsToMany(User, {
+  through: FavoriteChef,
+  foreignKey: 'chefId',
+  otherKey: 'userId',
+  as: 'favoritedByUsers',
+});
+
+FavoriteChef.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+FavoriteChef.belongsTo(Chef, { foreignKey: 'chefId', as: 'chef' });
+User.hasMany(FavoriteChef, { foreignKey: 'userId', as: 'favoriteChefLinks' });
+Chef.hasMany(FavoriteChef, { foreignKey: 'chefId', as: 'favoriteChefLinks' });
 
 module.exports = {
   sequelize,
@@ -36,5 +57,6 @@ module.exports = {
   Chef,
   Booking,
   Review,
-  Cuisine
+  Cuisine,
+  FavoriteChef,
 };

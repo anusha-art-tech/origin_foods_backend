@@ -1,3 +1,6 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     id: {
@@ -28,8 +31,8 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     role: {
-      type: DataTypes.ENUM('user', 'chef', 'admin'),
-      defaultValue: 'user'
+      type: DataTypes.ENUM('customer', 'chef', 'admin'),
+      defaultValue: 'customer'
     },
     avatar: {
       type: DataTypes.STRING(255),
@@ -58,10 +61,6 @@ module.exports = (sequelize, DataTypes) => {
     zipCode: {
       type: DataTypes.STRING(20),
       allowNull: true
-    },
-    favoriteChefs: {
-      type: DataTypes.JSON,
-      defaultValue: []
     },
     isVerified: {
       type: DataTypes.BOOLEAN,

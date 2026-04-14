@@ -1,5 +1,10 @@
 const { body, validationResult } = require('express-validator');
 
+const optionalStringList = (field, label) => body(field)
+  .optional({ values: 'falsy' })
+  .custom((value) => Array.isArray(value) || typeof value === 'string')
+  .withMessage(`${label} must be a comma separated string or array`);
+
 // Validation rules for user registration
 const validateRegister = [
   body('name')
@@ -11,9 +16,67 @@ const validateRegister = [
   body('password')
     .notEmpty().withMessage('Password is required')
     .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('phone')
+    .optional({ values: 'falsy' })
+    .isLength({ min: 7, max: 20 }).withMessage('Phone number must be between 7 and 20 characters'),
   body('role')
     .optional()
-    .isIn(['user', 'chef']).withMessage('Role must be either user or chef'),
+    .isIn(['customer', 'chef']).withMessage('Role must be either customer or chef'),
+  body('city')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 100 }).withMessage('City cannot exceed 100 characters'),
+  body('state')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 100 }).withMessage('State cannot exceed 100 characters'),
+  body('country')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 100 }).withMessage('Country cannot exceed 100 characters'),
+  body('zipCode')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 20 }).withMessage('ZIP code cannot exceed 20 characters'),
+  body('cuisine')
+    .if(body('role').equals('chef'))
+    .notEmpty().withMessage('Cuisine is required for chef accounts'),
+  body('bio')
+    .optional({ values: 'falsy' })
+    .isLength({ min: 20, max: 1000 }).withMessage('Bio must be between 20 and 1000 characters'),
+  body('experience')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 0, max: 50 }).withMessage('Experience must be between 0 and 50 years'),
+  body('pricePerService')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 }).withMessage('Price per service must be a positive number'),
+  body('pricePerGuest')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 }).withMessage('Price per guest must be a positive number'),
+  body('travelFee')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 }).withMessage('Travel fee must be a positive number'),
+  body('minimumGuests')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: 100 }).withMessage('Minimum guests must be between 1 and 100'),
+  body('maxGuests')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: 100 }).withMessage('Maximum guests must be between 1 and 100'),
+  body('responseTime')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 100 }).withMessage('Response time cannot exceed 100 characters'),
+  body('sampleMenu')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 2000 }).withMessage('Sample menu cannot exceed 2000 characters'),
+  body('kitchenRequirements')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 1000 }).withMessage('Kitchen requirements cannot exceed 1000 characters'),
+  body('allergenExperience')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 1000 }).withMessage('Allergen experience cannot exceed 1000 characters'),
+  optionalStringList('languages', 'Languages'),
+  optionalStringList('signatureDishes', 'Signature dishes'),
+  optionalStringList('specialties', 'Specialties'),
+  optionalStringList('dietaryOptions', 'Dietary options'),
+  optionalStringList('certifications', 'Certifications'),
+  optionalStringList('serviceAreas', 'Service areas'),
+  optionalStringList('galleryImages', 'Gallery images'),
 ];
 
 // Validation rules for user login
@@ -41,6 +104,25 @@ const validateChefProfile = [
     .isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('cuisine')
     .notEmpty().withMessage('Cuisine type is required'),
+  body('pricePerGuest')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 }).withMessage('Price per guest must be a positive number'),
+  body('travelFee')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 }).withMessage('Travel fee must be a positive number'),
+  body('minimumGuests')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: 100 }).withMessage('Minimum guests must be between 1 and 100'),
+  body('maxGuests')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: 100 }).withMessage('Maximum guests must be between 1 and 100'),
+  optionalStringList('languages', 'Languages'),
+  optionalStringList('signatureDishes', 'Signature dishes'),
+  optionalStringList('specialties', 'Specialties'),
+  optionalStringList('dietaryOptions', 'Dietary options'),
+  optionalStringList('certifications', 'Certifications'),
+  optionalStringList('serviceAreas', 'Service areas'),
+  optionalStringList('galleryImages', 'Gallery images'),
 ];
 
 // Validation rules for booking creation
@@ -117,6 +199,34 @@ const validateChefUpdate = [
   body('pricePerGuest')
     .optional()
     .isFloat({ min: 0 }).withMessage('Price per guest must be a positive number'),
+  body('travelFee')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Travel fee must be a positive number'),
+  body('minimumGuests')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('Minimum guests must be between 1 and 100'),
+  body('maxGuests')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('Maximum guests must be between 1 and 100'),
+  body('responseTime')
+    .optional()
+    .isLength({ max: 100 }).withMessage('Response time cannot exceed 100 characters'),
+  body('sampleMenu')
+    .optional()
+    .isLength({ max: 2000 }).withMessage('Sample menu cannot exceed 2000 characters'),
+  body('kitchenRequirements')
+    .optional()
+    .isLength({ max: 1000 }).withMessage('Kitchen requirements cannot exceed 1000 characters'),
+  body('allergenExperience')
+    .optional()
+    .isLength({ max: 1000 }).withMessage('Allergen experience cannot exceed 1000 characters'),
+  optionalStringList('languages', 'Languages'),
+  optionalStringList('signatureDishes', 'Signature dishes'),
+  optionalStringList('specialties', 'Specialties'),
+  optionalStringList('dietaryOptions', 'Dietary options'),
+  optionalStringList('certifications', 'Certifications'),
+  optionalStringList('serviceAreas', 'Service areas'),
+  optionalStringList('galleryImages', 'Gallery images'),
 ];
 
 // Validation rules for booking status update
@@ -131,7 +241,19 @@ const validateBookingStatus = [
 const validateUserRole = [
   body('role')
     .notEmpty().withMessage('Role is required')
-    .isIn(['user', 'chef', 'admin']).withMessage('Invalid role value'),
+    .isIn(['customer', 'chef', 'admin']).withMessage('Invalid role value'),
+];
+
+const validateCuisine = [
+  body('name')
+    .notEmpty().withMessage('Cuisine name is required')
+    .isLength({ min: 2, max: 100 }).withMessage('Cuisine name must be between 2 and 100 characters'),
+  body('description')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 500 }).withMessage('Cuisine description cannot exceed 500 characters'),
+  body('icon')
+    .optional({ values: 'falsy' })
+    .isLength({ max: 255 }).withMessage('Cuisine icon cannot exceed 255 characters'),
 ];
 
 // Middleware to check validation results
@@ -141,7 +263,7 @@ const checkValidation = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors: errors.array().map(err => ({
-        field: err.param,
+        field: err.path || err.param,
         message: err.msg,
       })),
     });
@@ -160,5 +282,6 @@ module.exports = {
   validateChefUpdate,
   validateBookingStatus,
   validateUserRole,
+  validateCuisine,
   checkValidation,
 };

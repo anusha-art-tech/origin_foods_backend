@@ -1,18 +1,22 @@
+const asyncHandler = require('express-async-handler');
 const { Booking, Chef, User } = require('../models');
 const { Op } = require('sequelize');
 
 // @desc    Create booking
 // @route   POST /api/bookings
 // @access  Private
-const createBooking = async (req, res) => {
+const createBooking = asyncHandler(async (req, res) => {
   const { chefId, date, time, guests, address, city, state, zipCode, specialRequests } = req.body;
+
+  if (req.user.role !== 'customer' && req.user.role !== 'admin') {
+    res.status(403);
+    throw new Error('Only customers can create bookings');
+  }
 
   const chef = await Chef.findByPk(chefId);
   if (!chef) {
-    return res.status(404).json({
-      success: false,
-      message: 'Chef not found',
-    });
+    res.status(404);
+    throw new Error('Chef not found');
   }
 
   // Calculate amounts
@@ -49,12 +53,12 @@ const createBooking = async (req, res) => {
     success: true,
     data: booking,
   });
-};
+});
 
 // @desc    Get user bookings
 // @route   GET /api/bookings/user
 // @access  Private
-const getUserBookings = async (req, res) => {
+const getUserBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.findAll({
     where: { userId: req.user.id },
     include: [{
@@ -69,18 +73,16 @@ const getUserBookings = async (req, res) => {
     success: true,
     data: bookings,
   });
-};
+});
 
 // @desc    Get chef bookings
 // @route   GET /api/bookings/chef
 // @access  Private (Chef only)
-const getChefBookings = async (req, res) => {
+const getChefBookings = asyncHandler(async (req, res) => {
   const chef = await Chef.findOne({ where: { userId: req.user.id } });
   if (!chef) {
-    return res.status(404).json({
-      success: false,
-      message: 'Chef profile not found',
-    });
+    res.status(404);
+    throw new Error('Chef profile not found');
   }
 
   const bookings = await Booking.findAll({
@@ -97,12 +99,12 @@ const getChefBookings = async (req, res) => {
     success: true,
     data: bookings,
   });
-};
+});
 
 // @desc    Get booking by ID
 // @route   GET /api/bookings/:id
 // @access  Private
-const getBookingById = async (req, res) => {
+const getBookingById = asyncHandler(async (req, res) => {
   const booking = await Booking.findByPk(req.params.id, {
     include: [
       { model: Chef, as: 'chef' },
@@ -111,46 +113,38 @@ const getBookingById = async (req, res) => {
   });
 
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'Booking not found',
-    });
+    res.status(404);
+    throw new Error('Booking not found');
   }
 
   if (booking.userId !== req.user.id && booking.chef.userId !== req.user.id && req.user.role !== 'admin') {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   res.status(200).json({
     success: true,
     data: booking,
   });
-};
+});
 
 // @desc    Update booking status
 // @route   PUT /api/bookings/:id/status
 // @access  Private
-const updateBookingStatus = async (req, res) => {
+const updateBookingStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const booking = await Booking.findByPk(req.params.id);
 
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'Booking not found',
-    });
+    res.status(404);
+    throw new Error('Booking not found');
   }
 
   const chef = await Chef.findByPk(booking.chefId);
 
   if (chef.userId !== req.user.id && req.user.role !== 'admin') {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   booking.status = status;
@@ -163,34 +157,28 @@ const updateBookingStatus = async (req, res) => {
     success: true,
     data: booking,
   });
-};
+});
 
 // @desc    Cancel booking
 // @route   PUT /api/bookings/:id/cancel
 // @access  Private
-const cancelBooking = async (req, res) => {
+const cancelBooking = asyncHandler(async (req, res) => {
   const { reason } = req.body;
   const booking = await Booking.findByPk(req.params.id);
 
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'Booking not found',
-    });
+    res.status(404);
+    throw new Error('Booking not found');
   }
 
   if (booking.userId !== req.user.id && req.user.role !== 'admin') {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized',
-    });
+    res.status(401);
+    throw new Error('Not authorized');
   }
 
   if (!booking.canCancel()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Booking cannot be cancelled less than 24 hours before the scheduled time',
-    });
+    res.status(400);
+    throw new Error('Booking cannot be cancelled less than 24 hours before the scheduled time');
   }
 
   booking.status = 'cancelled';
@@ -202,7 +190,7 @@ const cancelBooking = async (req, res) => {
     success: true,
     data: booking,
   });
-};
+});
 
 module.exports = {
   createBooking,
