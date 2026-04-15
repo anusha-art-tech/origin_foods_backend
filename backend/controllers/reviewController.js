@@ -1,6 +1,22 @@
 const asyncHandler = require('express-async-handler');
 const { Review, Booking, Chef, User } = require('../models');
 
+const syncChefRating = async (chefId) => {
+  const reviews = await Review.findAll({ where: { chefId } });
+  const totalReviews = reviews.length;
+  const avgRating = totalReviews
+    ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / totalReviews
+    : 0;
+
+  await Chef.update(
+    {
+      rating: Number(avgRating.toFixed(2)),
+      totalReviews,
+    },
+    { where: { id: chefId } }
+  );
+};
+
 // @desc    Create review
 // @route   POST /api/reviews
 // @access  Private
@@ -40,11 +56,7 @@ const createReview = asyncHandler(async (req, res) => {
     comment,
   });
 
-  // Update chef rating
-  const chef = await Chef.findByPk(booking.chefId);
-  const reviews = await Review.findAll({ where: { chefId: booking.chefId } });
-  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-  await chef.update({ rating: avgRating, totalReviews: reviews.length });
+  await syncChefRating(booking.chefId);
 
   res.status(201).json({
     success: true,
@@ -108,7 +120,12 @@ const updateReview = asyncHandler(async (req, res) => {
     throw new Error('Not authorized');
   }
 
-  await review.update(req.body);
+  await review.update({
+    rating: req.body.rating ?? review.rating,
+    title: req.body.title ?? review.title,
+    comment: req.body.comment ?? review.comment,
+  });
+  await syncChefRating(review.chefId);
 
   res.status(200).json({
     success: true,
@@ -132,7 +149,9 @@ const deleteReview = asyncHandler(async (req, res) => {
     throw new Error('Not authorized');
   }
 
+  const chefId = review.chefId;
   await review.destroy();
+  await syncChefRating(chefId);
 
   res.status(200).json({
     success: true,

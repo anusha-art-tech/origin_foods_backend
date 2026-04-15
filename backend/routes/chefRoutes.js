@@ -30,8 +30,8 @@ router.get('/:id/cuisines', getChefCuisines);
 router.get('/:id', getChefById);
 router.post('/', protect, chefImageUpload, validateChefProfile, checkValidation, createChefProfile);
 router.put('/:id', protect, chefImageUpload, validateChefUpdate, checkValidation, updateChefProfile);
-router.post('/:id/cuisines', protectChef, validateCuisine, checkValidation, createChefCuisine);
-router.put('/:id/cuisines/:cuisineId', protectChef, validateCuisine, checkValidation, updateChefCuisine);
+router.post('/:id/cuisines', protectChef, chefImageUpload, validateCuisine, checkValidation, createChefCuisine);
+router.put('/:id/cuisines/:cuisineId', protectChef, chefImageUpload, validateCuisine, checkValidation, updateChefCuisine);
 router.delete('/:id/cuisines/:cuisineId', protectChef, deleteChefCuisine);
 
 module.exports = router;

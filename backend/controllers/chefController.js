@@ -22,6 +22,9 @@ const getUploadedProfileImage = (req) => req.files?.profileImage?.[0]
   : null;
 
 const getUploadedGalleryImages = (req) => (req.files?.galleryImages || []).map((file) => buildFileUrl(req, file));
+const getUploadedCuisineIcon = (req) => req.files?.cuisineIcon?.[0]
+  ? buildFileUrl(req, req.files.cuisineIcon[0])
+  : null;
 
 const getExistingGalleryImages = (req) => parseList(req.body.existingGalleryImages);
 
@@ -367,7 +370,7 @@ const createChefCuisine = asyncHandler(async (req, res) => {
   const cuisine = await Cuisine.create({
     name: req.body.name,
     description: req.body.description || null,
-    icon: req.body.icon || null,
+    icon: getUploadedCuisineIcon(req) || req.body.icon || null,
     createdByChefId: chef.id,
     isActive: true,
   });
@@ -411,7 +414,7 @@ const updateChefCuisine = asyncHandler(async (req, res) => {
   await cuisine.update({
     name: req.body.name ?? cuisine.name,
     description: req.body.description ?? cuisine.description,
-    icon: req.body.icon ?? cuisine.icon,
+    icon: getUploadedCuisineIcon(req) || req.body.icon || cuisine.icon,
   });
 
   res.status(200).json({

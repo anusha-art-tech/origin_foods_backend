@@ -44,6 +44,7 @@ const upload = multer({
 const chefImageUpload = upload.fields([
   { name: 'profileImage', maxCount: 1 },
   { name: 'galleryImages', maxCount: 6 },
+  { name: 'cuisineIcon', maxCount: 1 },
 ]);
 
 const buildFileUrl = (req, file) => `${req.protocol}://${req.get('host')}/uploads/chef-images/${file.filename}`;
